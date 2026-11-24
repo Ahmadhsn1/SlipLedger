@@ -175,8 +175,8 @@ These values belong in an Expo environment and are safe for the public mobile bu
 ### Deploy Supabase
 
 1. Create an owner-controlled Supabase project.
-2. Apply [`supabase/schema.sql`](/Users/mac/Downloads/SlipLedger/supabase/schema.sql).
-3. Deploy [`supabase/functions/delete-account/index.ts`](/Users/mac/Downloads/SlipLedger/supabase/functions/delete-account/index.ts).
+2. Apply [`supabase/schema.sql`](supabase/schema.sql).
+3. Deploy [`supabase/functions/delete-account/index.ts`](supabase/functions/delete-account/index.ts).
 4. Configure the Edge Function with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
 5. Use the public URL and anonymous key as the two `EXPO_PUBLIC_SUPABASE_*` values.
 
@@ -221,9 +221,9 @@ npm test
 
 Detailed release evidence and remaining gates are maintained in:
 
-- [`docs/validation.md`](/Users/mac/Downloads/SlipLedger/docs/validation.md)
-- [`docs/current-plan.md`](/Users/mac/Downloads/SlipLedger/docs/current-plan.md)
-- [`docs/product.md`](/Users/mac/Downloads/SlipLedger/docs/product.md)
+- [`docs/validation.md`](docs/validation.md)
+- [`docs/current-plan.md`](docs/current-plan.md)
+- [`docs/product.md`](docs/product.md)
 
 ### Release status
 
