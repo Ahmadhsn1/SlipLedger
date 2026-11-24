@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/icon.png" alt="SlipLedger app icon" width="112" />
+
 # SlipLedger
 
 ### One thoughtful workspace for expenses, projects, invoices, and cash flow
@@ -9,6 +11,8 @@
 [![Android](https://img.shields.io/badge/Android-API_24+-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
 [![iOS](https://img.shields.io/badge/iOS-Native_Module-000000?logo=apple&logoColor=white)](https://developer.apple.com)
 [![Supabase](https://img.shields.io/badge/Supabase-Optional-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![Tests](https://github.com/Ahmadhsn1/SlipLedger/actions/workflows/tests.yml/badge.svg)](https://github.com/Ahmadhsn1/SlipLedger/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **SlipLedger** is a polished, offline-first mobile ledger designed to keep personal spending and business money in order—without sending your financial records to a third party by default.
 
