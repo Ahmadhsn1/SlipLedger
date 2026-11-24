@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "SlipLedger",
+    "slug": "fieldtab-mobile",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "studio.fieldtab.mobile",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Photograph a receipt to document a project expense.",
+        "NSPhotoLibraryUsageDescription": "Attach a receipt image to your project."
+      }
+    },
+    "android": {
+      "package": "studio.fieldtab.mobile",
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "microphonePermission": false
+        }
+      ],
+      "expo-document-picker",
+      "expo-sqlite"
+    ],
+    "icon": "./assets/icon.png"
+  }
+}
