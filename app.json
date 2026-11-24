@@ -3,6 +3,7 @@
     "name": "SlipLedger",
     "slug": "fieldtab-mobile",
     "version": "0.1.0",
+    "scheme": "slipledger",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -28,7 +29,8 @@
         }
       ],
       "expo-document-picker",
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-web-browser"
     ],
     "icon": "./assets/icon.png"
   }

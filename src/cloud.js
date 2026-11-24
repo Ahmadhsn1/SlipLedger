@@ -1,6 +1,7 @@
 import "react-native-url-polyfill/auto";
 import { sessionStorage } from "./session";
 import { createClient } from "@supabase/supabase-js";
+import * as WebBrowser from "expo-web-browser";
 import * as FS from "expo-file-system/legacy";
 import JSZip from "jszip";
 import { decode, encode } from "base64-arraybuffer";
@@ -16,10 +17,53 @@ export const cloud =
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: false,
+          flowType: "pkce",
         },
       })
     : null;
+const authRedirect = "slipledger://auth/callback";
 const LIMIT = 24 * 1024 * 1024;
+export async function signInWithGoogle() {
+  if (!cloud) throw Error("Cloud sign-in is not configured in this build.");
+  const { data, error } = await cloud.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: authRedirect, skipBrowserRedirect: true },
+  });
+  if (error) throw error;
+  if (!data.url) throw Error("Google sign-in could not be started.");
+
+  const result = await WebBrowser.openAuthSessionAsync(data.url, authRedirect);
+  if (result.type === "cancel" || result.type === "dismiss") return false;
+  if (result.type !== "success" || !result.url)
+    throw Error("Google sign-in did not return to SlipLedger.");
+
+  const callback = new URL(result.url);
+  const query = callback.searchParams;
+  const fragment = new URLSearchParams(callback.hash.replace(/^#/, ""));
+  const value = (key) => query.get(key) || fragment.get(key);
+  const callbackError = value("error_description") || value("error");
+  if (callbackError) throw Error(callbackError);
+
+  const code = value("code");
+  if (code) {
+    const { error: exchangeError } =
+      await cloud.auth.exchangeCodeForSession(code);
+    if (exchangeError) throw exchangeError;
+    return true;
+  }
+
+  const accessToken = value("access_token");
+  const refreshToken = value("refresh_token");
+  if (accessToken && refreshToken) {
+    const { error: sessionError } = await cloud.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (sessionError) throw sessionError;
+    return true;
+  }
+  throw Error("Google sign-in did not return a valid session.");
+}
 function check(result) {
   if (result.error) throw result.error;
   return result.data;

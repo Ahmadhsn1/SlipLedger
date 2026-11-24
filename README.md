@@ -186,6 +186,18 @@ These values belong in an Expo environment and are safe for the public mobile bu
 
 Cloud backup is disabled automatically if public Supabase configuration is missing. A backup is limited to 24 MB and must be restored into an empty local workspace.
 
+### Enable email and Google sign-in
+
+The Account screen supports passwordless email sign-in/sign-up and Google OAuth. Configure the provider before testing authentication:
+
+1. In Supabase **Authentication → URL Configuration**, add `slipledger://auth/callback` to the allowed redirect URLs.
+2. In **Authentication → Providers → Google**, enable Google and add the OAuth client credentials from your Google Cloud project.
+3. Add the Supabase callback URL shown in the Google provider settings to the authorized redirect URIs in Google Cloud.
+4. In the Supabase **Confirm signup** and **Magic link** email templates, include `{{ .Token }}` so the app can verify the one-time code it requests.
+5. Configure the public Supabase values above, then rebuild the native app so the `slipledger` URL scheme is registered.
+
+Google sign-in uses the system browser and a PKCE authorization flow. Email sign-in sends a one-time verification code; account creation also collects a display name. The local ledger remains available without signing in. Expo Go does not support this app's custom native callback scheme; use a development or release build.
+
 ---
 
 ## Scripts

@@ -1,7 +1,7 @@
 import React from "react";
 import { LegalLinks } from "./LegalLinks";
 import { T, Button, Chips } from "./UI";
-import { Account } from "./Account";
+import { AccountEntry } from "./Account";
 import { currencies } from "./ledger.cjs";
 import { read, eraseWorkspace } from "./native";
 export default function SettingsScreen({
@@ -15,7 +15,7 @@ export default function SettingsScreen({
 }) {
   return (
     <>
-      <Account work={work} reload={() => setDb(read())} />
+      <AccountEntry onOpen={() => go("Account")} />
       <T kind="label">Appearance</T>
       <Chips values={["System","Light","Dark"]} selected={db.appearance || "System"} onSelect={(appearance)=>commit(st=>({...st,appearance}))} />
       {intro(

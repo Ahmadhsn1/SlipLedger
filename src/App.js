@@ -3,6 +3,7 @@ import ReviewScreen from "./ReviewScreen";
 import ProjectInvoiceScreen from "./ProjectInvoiceScreen";
 import InvoiceScreen from "./InvoiceScreen";
 import LedgerScreen from "./LedgerScreen";
+import { Account } from "./Account";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -101,13 +102,15 @@ function Main() {
     return next;
   };
   const work = async (label, fn) => {
-    if (lock.current) return;
+    if (lock.current) return false;
     lock.current = true;
     setBusy(label);
     try {
       await fn();
+      return true;
     } catch (e) {
       fail(e);
+      return false;
     } finally {
       lock.current = false;
       setBusy("");
@@ -693,6 +696,8 @@ function Main() {
         confirm={confirm}
       />
     );
+  if (name === "Account")
+    content = <Account work={work} reload={() => setDb(read())} />;
   return (
     <ThemeContext.Provider value={theme}><SafeAreaView style={{ flex: 1, backgroundColor: color.paper }}>
       <StatusBar barStyle={theme===themes.dark?"light-content":"dark-content"} backgroundColor={color.paper} />
