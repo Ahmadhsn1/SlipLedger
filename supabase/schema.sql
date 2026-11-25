@@ -10,6 +10,9 @@ grant execute on function fieldtab_private.active_account() to authenticated;
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values ('workspaces','workspaces',false,25165824,array['application/zip'])
 on conflict(id) do update set public=false,file_size_limit=excluded.file_size_limit,allowed_mime_types=excluded.allowed_mime_types;
+drop policy if exists "read own backup" on storage.objects;
+drop policy if exists "create own backup" on storage.objects;
+drop policy if exists "replace own backup" on storage.objects;
 create policy "read own backup" on storage.objects for select to authenticated
 using((select fieldtab_private.active_account()) and bucket_id='workspaces' and name=(select auth.uid())::text||'/backup.zip');
 create policy "create own backup" on storage.objects for insert to authenticated

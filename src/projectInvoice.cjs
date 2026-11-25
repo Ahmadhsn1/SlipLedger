@@ -17,7 +17,7 @@ function issueProjectInvoice(state, projectId, selectedIds, invoiceId, due) {
   do { number = 'INV-' + String(sequence++).padStart(3,'0'); } while (numbers.has(number));
   return addInvoice(state, {
     id:invoiceId, number, kind:'Invoice', client:project.client, description:project.name,
-    due, currency, projectId, items:rows.map(x=>({expenseId:x.id,label:x.merchant,qty:1,rate:x.minor})),
+    due, issued:new Date().toISOString().slice(0,10),sender:{...(state.businessProfile||{})}, currency, projectId, items:rows.map(x=>({expenseId:x.id,label:x.merchant,qty:1,rate:x.minor})),
     total:rows.reduce((n,x)=>n+x.minor,0),payments:[]
   });
 }

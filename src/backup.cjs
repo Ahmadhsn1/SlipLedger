@@ -1,4 +1,4 @@
-const { validDate, currencies, categories } = require("./ledger.cjs");
+const { validDate, validCurrency, categories } = require("./ledger.cjs");
 const id = (v) => typeof v === "string" && /^[a-z0-9-]{2,64}$/.test(v);
 const file = (v) =>
   typeof v === "string" && /^[a-z0-9-]{2,64}\.(jpeg|jpg|png|pdf|heic)$/.test(v);
@@ -36,7 +36,7 @@ function verify(state) {
       !Number.isSafeInteger(x.minor) ||
       x.minor <= 0 ||
       x.minor > 9999999999 ||
-      !currencies.includes(x.currency) ||
+      !validCurrency(x.currency) ||
       !categories.includes(x.category) ||
       typeof x.billable !== "boolean" ||
       (x.file != null && !file(x.file)) ||
@@ -47,6 +47,7 @@ function verify(state) {
     )
       fail();
   }
+  if (state.customCurrencies !== undefined && (!Array.isArray(state.customCurrencies) || state.customCurrencies.length > 200 || !state.customCurrencies.every(validCurrency) || new Set(state.customCurrencies).size !== state.customCurrencies.length)) fail();
   const claimed = new Set();
   for (const r of state.reports) {
     if (
@@ -72,7 +73,7 @@ function verify(state) {
       claimed.add(x.id);
     }
   }
-  if (state.currency && !currencies.includes(state.currency)) fail();
+  if (state.currency && !validCurrency(state.currency)) fail();
   if(state.invoices!==undefined){
     const {validInvoice,documentKey}=require('./invoices.cjs');
     if(!Array.isArray(state.invoices)||state.invoices.length>50000||!state.invoices.every(validInvoice)||

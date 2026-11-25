@@ -3,7 +3,7 @@ import { Image } from "react-native";
 import { T, Button, Chips, Field } from "./UI";
 import * as Sharing from "expo-sharing";
 import { receiptDir } from "./native";
-import { currencies, categories } from "./ledger.cjs";
+import { currencyOptions, categories } from "./ledger.cjs";
 export default function ReviewScreen({
   draft,
   hint,
@@ -53,7 +53,7 @@ export default function ReviewScreen({
       />
       <T kind="label">Receipt currency</T>
       <Chips
-        values={currencies}
+        values={currencyOptions(db)}
         selected={draft.currency}
         onSelect={(v) => field("currency", v)}
       />

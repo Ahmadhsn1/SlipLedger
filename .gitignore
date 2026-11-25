@@ -7,3 +7,7 @@ dist/
 /ios/
 *.keystore
 *.p12
+modules/**/android/build/
+modules/**/android/.gradle/
+*.apk
+*.aab

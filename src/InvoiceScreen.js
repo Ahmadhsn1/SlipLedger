@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
 import {Alert, View} from 'react-native';
 import {T, Field, Button, Chips, Row} from './UI';
-import {cents, currencies} from './ledger.cjs';
-import {balance, addInvoice, recordPayment, lineTotal} from './invoices.cjs';
+import {cents, currencyOptions} from './ledger.cjs';
+import {balance, addInvoice, recordPayment, lineTotal, updateInvoice, deleteInvoice, changePayment} from './invoices.cjs';
 import {today, money, uid, shareInvoice} from './native';
 
 const blankLine = () => ({key:uid(), label:'', quantity:'1', price:''});
@@ -11,6 +11,9 @@ export default function InvoiceScreen({db,commit,work,initialId}) {
   const [draft,setDraft]=useState(null);
   const [selected,select]=useState(initialId || null);
   const [payment,setPayment]=useState('');
+  const [paymentId,setPaymentId]=useState(null);
+  const [paymentDate,setPaymentDate]=useState(today);
+  const confirmDelete=(title,fn)=>Alert.alert(title,'This action changes your saved records.',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:fn}]);
   const bill=kind==='Bill';
   const list=(db.invoices||[]).filter(x=>(x.kind||'Invoice')===kind);
   const current=list.find(x=>x.id===selected);
@@ -21,25 +24,27 @@ export default function InvoiceScreen({db,commit,work,initialId}) {
     let n=list.length+1;
     const number=()=> 'INV-'+String(n).padStart(3,'0');
     while(list.some(x=>x.number.toUpperCase()===number()))n++;
-    setDraft({id:uid(),kind,number:bill?'':number(),client:'',due:today(),currency:db.currency||'GBP',lines:[blankLine()]});
+    setDraft({id:uid(),issued:today(),sender:{...(db.businessProfile||{})},kind,number:bill?'':number(),client:'',due:today(),currency:db.currency||'GBP',lines:[blankLine()]});
   }
   function set(key,value){setDraft(d=>({...d,[key]:value}));}
   function editLine(key,field,value){
     setDraft(d=>({...d,lines:d.lines.map(l=>l.key===key?{...l,[field]:value}:l)}));
   }
   if(draft){
-    const items=draft.lines.map(l=>({label:l.label.trim(),qty:/^\d+$/.test(l.quantity)?Number(l.quantity):0,rate:cents(l.price)}));
+    const items=draft.lines.map(l=>({...l.expenseId ? {expenseId:l.expenseId} : {},label:l.label.trim(),qty:/^\d+$/.test(l.quantity)?Number(l.quantity):0,rate:cents(l.price)}));
     const total=lineTotal(items);
     function issue(){
       const {lines,...fields}=draft;
-      const doc={...fields,number:fields.number.trim(),client:fields.client.trim(),items,total,description:items[0].label,payments:[]};
-      submit(st=>addInvoice(st,doc),()=>{setDraft(null);select(doc.id);});
+      const doc={...fields,number:fields.number.trim(),client:fields.client.trim(),items,total,sender:fields.sender || {...(db.businessProfile || {})},description:items[0].label,payments:draft.payments || []};
+      submit(st=>(list.some(x=>x.id===doc.id)?updateInvoice(st,doc):addInvoice(st,doc)),()=>{setDraft(null);select(doc.id);});
     }
-    return <><T kind="title">{bill?'New supplier bill':'New invoice'}</T>
+    return <><T kind="title">{list.some(x=>x.id===draft.id)?'Edit document':bill?'New supplier bill':'New invoice'}</T>
       <Field label="Document number" value={draft.number} onChangeText={v=>set('number',v)}/>
       <Field label={bill?'Supplier':'Client'} value={draft.client} onChangeText={v=>set('client',v)}/>
+      <Field label="Client address / contact" value={draft.clientDetails || ""} onChangeText={v=>set("clientDetails",v)}/>
+      <Field label="Issue date · YYYY-MM-DD" value={draft.issued || ""} onChangeText={v=>set("issued",v)}/>
       <Field label="Due date · YYYY-MM-DD" value={draft.due} onChangeText={v=>set('due',v)}/>
-      <Chips values={currencies} selected={draft.currency} onSelect={v=>set('currency',v)}/>
+      <Chips values={currencyOptions(db)} selected={draft.currency} onSelect={v=>set('currency',v)}/>
       {draft.lines.map((l,i)=><View key={l.key} style={{gap:8}}>
         <Field label={'Item '+(i+1)} value={l.label} onChangeText={v=>editLine(l.key,'label',v)}/>
         <Field label="Quantity" keyboardType="number-pad" value={l.quantity} onChangeText={v=>editLine(l.key,'quantity',v)}/>
@@ -57,11 +62,13 @@ export default function InvoiceScreen({db,commit,work,initialId}) {
     return <><T kind="title">{current.client}</T><T>{current.number} · Due {current.due}</T>
       {items.map((l,i)=><T key={i}>{l.label} · {l.qty} × {money(l.rate,current.currency)}</T>)}
       <T>Total {money(current.total,current.currency)}</T><T kind="strong">{bill?'To pay':'To receive'} {money(due,current.currency)}</T>
-      {current.payments.map(p=><T key={p.id}>{p.date} · {bill?'Paid':'Received'} {money(p.amount,current.currency)}</T>)}
-      {due>0&&<><Field label="Payment amount" keyboardType="decimal-pad" value={payment} onChangeText={setPayment}/>
-      <Button onPress={()=>{const p={id:uid(),date:today(),amount:cents(payment)};submit(st=>recordPayment(st,current.id,p),()=>setPayment(''));}}>Record payment</Button></>}
+      {current.payments.map(p=><View key={p.id}><T>{p.date} · {bill?'Paid':'Received'} {money(p.amount,current.currency)}</T><Button quiet onPress={()=>{setPaymentId(p.id);setPaymentDate(p.date);setPayment((p.amount/100).toFixed(2));}}>Edit payment</Button><Button quiet onPress={()=>confirmDelete('Delete payment?',()=>submit(st=>changePayment(st,current.id,p.id,null),()=>{setPaymentId(null);setPayment('');}))}>Delete payment</Button></View>)}
+      {(due>0 || paymentId)&&<><Field label="Payment date · YYYY-MM-DD" value={paymentDate} onChangeText={setPaymentDate}/><Field label="Payment amount" keyboardType="decimal-pad" value={payment} onChangeText={setPayment}/>
+      <Button onPress={()=>{const p={id:paymentId||uid(),date:paymentDate,amount:cents(payment)};submit(st=>paymentId?changePayment(st,current.id,paymentId,p):recordPayment(st,current.id,p),()=>{setPayment('');setPaymentId(null);});}}>{paymentId?"Save payment":"Record payment"}</Button></>}
+      <Button quiet onPress={()=>setDraft({...current,lines:items.map(l=>({...l,key:uid(),quantity:String(l.qty),price:(l.rate/100).toFixed(2)}))})}>Edit document</Button>
+      <Button quiet onPress={()=>confirmDelete('Delete document?',()=>submit(st=>deleteInvoice(st,current.id),()=>select(null)))}>Delete document</Button>
       <Button quiet onPress={()=>work('Preparing PDF',()=>shareInvoice(current))}>Share PDF</Button>
-      <Button quiet onPress={()=>{select(null);setPayment('');}}>Back to list</Button></>;
+      <Button quiet onPress={()=>{select(null);setPayment('');setPaymentId(null);}}>Back to list</Button></>;
   }
   return <><T kind="title">Invoices & bills</T><Chips values={['Client invoices','Supplier bills']} selected={bill?'Supplier bills':'Client invoices'} onSelect={v=>setKind(v==='Supplier bills'?'Bill':'Invoice')}/>
     <Button onPress={start}>{bill?'Add supplier bill':'Create invoice'}</Button>

@@ -39,6 +39,7 @@ import {
 } from "./native";
 import {
   currencies,
+  currencyOptions,
   categories,
   suggest,
   validate,
@@ -209,8 +210,9 @@ function Main() {
         const result = await requireOptionalNativeModule(
           "FieldReader",
         ).recognize(uri, ext === "pdf");
-        fields = suggest(result);
-        note = "Check the suggested fields against the original receipt.";
+        fields = suggest(result, currencyOptions(db));
+        note =
+          "Review the extracted details against the receipt. Category, workspace, project and reimbursement still need your confirmation.";
       } catch {
         note =
           "Enter the details manually. The original will be attached when you save.";
@@ -289,18 +291,18 @@ function Main() {
       setError("Enter a client and a project name.");
       return;
     }
-    const p = { id: uid(), name: project.trim(), client: client.trim() };
+    const p = { id: name === "Edit project" ? page.id : uid(), name: project.trim(), client: client.trim() };
     if (
       db.projects.some(
         (x) =>
-          x.name.toLowerCase() === p.name.toLowerCase() &&
+          x.id !== p.id && x.name.toLowerCase() === p.name.toLowerCase() &&
           x.client.toLowerCase() === p.client.toLowerCase(),
       )
     ) {
       setError("That client already has this project.");
       return;
     }
-    commit((state) => ({ ...state, projects: [p, ...state.projects] }));
+    commit((state) => ({ ...state, projects: name === "Edit project" ? state.projects.map(x=>x.id===p.id?p:x) : [p, ...state.projects] }));
     if (stack.at(-2)?.name === "Review") field("project", p.id);
     back();
   }
@@ -386,7 +388,7 @@ function Main() {
           )}
       </>
     );
-  if (name === "New project")
+  if (name === "New project" || name === "Edit project")
     content = (
       <>
         <Field
@@ -427,6 +429,8 @@ function Main() {
         >
           Prepare client report
         </Button>
+        <Button quiet onPress={()=>{setClient(proj.client);setProject(proj.name);go("Edit project",proj.id);}}>Edit project</Button>
+        <Button quiet onPress={()=>confirm("Delete project?","Only an empty project can be deleted. Remove its expenses, reports and invoices first.","Delete",()=>work("Deleting project",()=>{commit(st=>{if(st.expenses.some(x=>x.project===proj.id)||st.reports.some(x=>x.projectId===proj.id)||(st.invoices||[]).some(x=>x.projectId===proj.id))throw Error("This project has linked records. Remove them first.");return {...st,projects:st.projects.filter(x=>x.id!==proj.id)};});back();}))}>Delete project</Button>
         <T kind="strong">Project receipts</T>
         {rows(items)}
       </>
@@ -632,6 +636,7 @@ function Main() {
             Share {f.toUpperCase()}
           </Button>
         ))}
+        {rep.status !== "Prepared" && <Button quiet onPress={()=>confirm("Correct report status?","Return this report to Prepared. This also reverses its recorded sent or reimbursement status.","Reset status",()=>commit(st=>({...st,reports:st.reports.map(r=>r.id===rep.id?{...r,status:"Prepared"}:r)})))}>Reset to prepared</Button>}
         {next && (
           <Button
             quiet
@@ -660,13 +665,13 @@ function Main() {
             Mark as {next.toLowerCase()}
           </Button>
         )}
-        {rep.status === "Prepared" && (
+        {rep && (
           <Button
             quiet
             onPress={() =>
               confirm(
-                "Discard prepared report?",
-                "Its expenses will return to Ready to claim.",
+                "Delete report?",
+                "This removes the report and its reimbursement status. Its expenses will return to Ready to claim.",
                 "Discard",
                 () => {
                   commit((st) => ({
@@ -678,7 +683,7 @@ function Main() {
               )
             }
           >
-            Discard prepared report
+            Delete report
           </Button>
         )}
       </>

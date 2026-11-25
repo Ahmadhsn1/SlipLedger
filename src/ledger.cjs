@@ -1,4 +1,6 @@
-const currencies = ["USD", "GBP", "EUR"];
+const currencies = ["PKR", "USD", "GBP", "EUR"];
+const validCurrency = code => typeof code === "string" && /^[A-Z]{3}$/.test(code);
+const currencyOptions = (state = {}) => [...new Set([...currencies, ...(state.customCurrencies || []), state.currency, ...(state.expenses || []).map(x => x.currency), ...(state.invoices || []).map(x => x.currency)])].filter(validCurrency);
 const categories = ["Supplies", "Travel", "Meals", "Equipment", "Other"];
 function cents(value) {
   const clean = String(value ?? "")
@@ -18,7 +20,7 @@ function validate(d) {
   if (!validDate(d.date)) return "Enter a valid date in YYYY-MM-DD format.";
   if (!(cents(d.amount) > 0))
     return "Enter a positive amount with up to two decimal places.";
-  if (!currencies.includes(d.currency))
+  if (!validCurrency(d.currency))
     return "Choose the currency printed on the receipt.";
   if (d.workspace !== "Personal" && !d.project) return "Choose a project.";
   if (d.tax && (cents(d.tax) === null || cents(d.tax) > cents(d.amount)))
@@ -29,13 +31,19 @@ function printedAmount(line) {
   // Credits and ambiguous signed totals need manual review.
   if (/[−–-]|\(|\)|\b(?:refund|credit|CR)\b/i.test(line)) return null;
   const match = line.match(
-    /(?:^|[^\d.,])((?:\d{1,3}(?:[., ]\d{3})+|\d{1,8})[.,]\d{2})\s*(?:USD|GBP|EUR)?$/i,
+    /(?:^|[^\d.,])((?:\d{1,3}(?:[., ]\d{3})+|\d{1,8})[.,]\d{2})\s*(?:[A-Z]{3})?\s*$/i,
   );
   if (!match) return null;
   const raw = match[1],
     major = raw.slice(0, -3).replace(/[., ]/g, "");
   const amount = major + "." + raw.slice(-2);
   return cents(amount) === null ? null : amount;
+}
+function standaloneAmount(line, enabledCurrencies) {
+  const codes = line.match(/[A-Za-z]+/g) || [];
+  if (codes.some(code => !enabledCurrencies.includes(code.toUpperCase()))) return null;
+  if (!/^(?:(?:[A-Z]{3}|[$£€])\s*)?[\d., ]+\s*(?:[A-Z]{3})?$/i.test(line)) return null;
+  return printedAmount(line);
 }
 function printedDate(text) {
   const iso = text.match(/\b\d{4}-\d{2}-\d{2}\b/)?.[0];
@@ -53,32 +61,59 @@ function printedDate(text) {
   const date = year + "-" + month.padStart(2, "0") + "-" + day.padStart(2, "0");
   return validDate(date) ? date : "";
 }
-function suggest(text) {
+function suggestedCategory(text) {
+  const signals = [
+    ["Travel", /\b(?:airline|airport|flight|hotel|lodging|taxi|uber|lyft|train|rail|transit|parking|toll)\b/i],
+    ["Meals", /\b(?:restaurant|cafe|coffee|café|diner|food|meal|takeaway|takeout|bakery)\b/i],
+    ["Equipment", /\b(?:laptop|computer|monitor|electronics|equipment|camera|printer|tablet)\b/i],
+    ["Supplies", /\b(?:office supplies|stationery|printing|paper|ink|toner|hardware store)\b/i],
+  ]
+    .filter(([, pattern]) => pattern.test(text))
+    .map(([category]) => category);
+  return signals.length === 1 ? signals[0] : "";
+}
+function suggest(text, enabledCurrencies = currencies) {
   const lines = text
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter(Boolean);
-  const gross = lines.filter(
-    (s) =>
-      /^(?:grand\s+total|total(?:\s+(?:amount|due|paid))?|amount\s+paid)\b/i.test(
-        s,
-      ) && !/tax|savings|discount|items/i.test(s),
-  );
-  const candidates = new Set(gross.map(printedAmount).filter(Boolean));
-  const currency = currencies.filter(
+  const gross = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (
+      !/^(?:grand\s+total|total(?:\s+(?:amount|due|paid|payable))?|amount\s+(?:paid|due)|balance\s+due)\b/i.test(
+        line,
+      ) ||
+      /tax|savings|discount|items/i.test(line)
+    )
+      continue;
+    const inline = printedAmount(line);
+    if (inline) gross.push(inline);
+    else if (i + 1 < lines.length && standaloneAmount(lines[i + 1], enabledCurrencies))
+      gross.push(standaloneAmount(lines[i + 1], enabledCurrencies));
+  }
+  const candidates = new Set(gross);
+  const currency = enabledCurrencies.filter(
     (c) =>
       new RegExp("\\b" + c + "\\b", "i").test(text) ||
       (c === "GBP" && text.includes("£")) ||
       (c === "EUR" && text.includes("€")),
   );
-  const taxes = new Set(
-    lines
-      .filter((s) => /^(?:VAT|SALES TAX|TAX)\b/i.test(s))
-      .map(printedAmount)
-      .filter(Boolean),
-  );
+  const taxes = new Set();
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^(?:VAT|SALES TAX|TAX)\b/i.test(lines[i])) continue;
+    const inline = printedAmount(lines[i]);
+    if (inline) taxes.add(inline);
+    else if (i + 1 < lines.length && standaloneAmount(lines[i + 1], enabledCurrencies))
+      taxes.add(standaloneAmount(lines[i + 1], enabledCurrencies));
+  }
   const merchant = lines.find(
-    (l) => !/^(receipt|invoice|sales receipt|tax invoice)$/i.test(l),
+    (l) =>
+      !/^(?:receipt|invoice|sales receipt|tax invoice|date|total|grand total|subtotal|sub-total|vat|tax|sales tax|amount due|balance due)\b/i.test(
+        l,
+      ) &&
+      !/^\d{1,2}[/.]\d{1,2}[/.]\d{2,4}$/.test(l) &&
+      !/^\d[\d\s().+-]{6,}$/.test(l),
   );
   return {
     merchant: merchant?.slice(0, 100) || "",
@@ -86,10 +121,11 @@ function suggest(text) {
     amount: candidates.size === 1 ? [...candidates][0] : "",
     currency: currency.length === 1 ? currency[0] : "",
     date: printedDate(text),
+    category: suggestedCategory(text) || "Other",
   };
 }
 function totals(items) {
-  return currencies
+  return [...new Set([...currencies, ...items.map(x => x.currency)])]
     .map((currency) => ({
       currency,
       minor: items
@@ -153,6 +189,8 @@ function csv(items) {
 }
 module.exports = {
   currencies,
+  validCurrency,
+  currencyOptions,
   categories,
   cents,
   validDate,

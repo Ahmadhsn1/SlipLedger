@@ -50,12 +50,13 @@ test("review requires explicit currency and included tax within total", () => {
 });
 test("recognition suggests only labelled totals", () => {
   const r = suggest(
-    "Print Lab\n2026-11-01\nSUBTOTAL 26.25\nVAT 5.25\nTOTAL GBP 31.50",
+    "Print Lab\n2026-11-01\nSUBTOTAL 26.25\nVAT 5.25\nTOTAL GBP 31.50\nPrinting paper",
   );
   assert.equal(r.amount, "31.50");
   assert.equal(r.currency, "GBP");
   assert.equal(r.tax, "5.25");
   assert.equal(r.date, "2026-11-01");
+  assert.equal(r.category, "Supplies");
 });
 test("unknown dollars and conflicting totals require review", () => {
   const r = suggest("Shop\nTOTAL $20.22\nTOTAL $21.22");
@@ -127,3 +128,28 @@ test("ambiguous US and UK dates are left blank", () =>
   assert.equal(suggest("Shop\n07/08/2026").date, ""));
 test("receipt heading is skipped", () =>
   assert.equal(suggest("TAX INVOICE\nJuniper Lab").merchant, "Juniper Lab"));
+test("receipt total on the following OCR line is suggested", () => {
+  const r = suggest(
+    "Juniper Cafe\nDate\n23/11/2026\nSubtotal\n12,50\nVAT\n2,50\nGrand Total\nEUR 15,00\nCafe latte",
+  );
+  assert.equal(r.merchant, "Juniper Cafe");
+  assert.equal(r.date, "2026-11-23");
+  assert.equal(r.amount, "15.00");
+  assert.equal(r.currency, "EUR");
+  assert.equal(r.tax, "2.50");
+  assert.equal(r.category, "Meals");
+});
+test("conflicting category clues do not make a category suggestion", () => {
+  assert.equal(
+    suggest("Shop\nCoffee and office supplies\nTOTAL GBP 8.00").category,
+    "Other",
+  );
+});
+test("non-total amounts are not mistaken for the receipt total", () => {
+  assert.equal(suggest("Shop\nItem 8.00\nTax 1.60").amount, "");
+});
+test("OCR missing values do not borrow a different labelled amount", () => {
+  assert.equal(suggest("Shop\nTOTAL\nTax 1.60").amount, "");
+  assert.equal(suggest("Shop\nVAT\nTotal GBP 12.00").tax, "");
+  assert.equal(suggest("Shop\nTOTAL\nCard payment 12.00").amount, "");
+});
