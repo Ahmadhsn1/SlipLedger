@@ -1,4 +1,6 @@
 import React from "react";
+import Ionicons from "@expo/vector-icons/Ionicons";
+export { Ionicons as Icon };
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
 const palettes = {
   light:{paper:"#FAF9F6",white:"#FFFFFF",ink:"#1A1C31",muted:"#54576B",green:"#414CC6",mint:"#DCE2FF",line:"#D8D8E0",gold:"#524993",error:"#A12848"},
@@ -12,8 +14,28 @@ export function T({ children, kind = "body", style, ...props }) {
     </Text>
   );
 }
-export function Button({ children, onPress, quiet = false, disabled = false }) {
+function actionIcon(label) {
+  const text = String(label).trim().replace(/^[＋+]\s*/, "").toLowerCase();
+  if (/delete|erase|discard|remove/.test(text)) return "trash-outline";
+  if (/^(?:back(?: to .*)?|cancel)$/.test(text)) return "arrow-back-outline";
+  if (/photo|camera/.test(text)) return "camera-outline";
+  if (/import|restore/.test(text)) return "cloud-download-outline";
+  if (/back up/.test(text)) return "cloud-upload-outline";
+  if (/share|pdf|csv|zip/.test(text)) return "share-outline";
+  if (/edit|correct/.test(text)) return "create-outline";
+  if (/payment|paid|reimbursed/.test(text)) return "wallet-outline";
+  if (/save|confirm|verify/.test(text)) return "checkmark-circle-outline";
+  if (/add|new|create/.test(text)) return "add-circle-outline";
+  if (/report|invoice|bill/.test(text)) return "document-text-outline";
+  if (/email|code/.test(text)) return "mail-outline";
+  if (/sign out/.test(text)) return "log-out-outline";
+  if (/manual/.test(text)) return "create-outline";
+  if (/reset|try again/.test(text)) return "refresh-outline";
+  return null;
+}
+export function Button({ children, onPress, quiet = false, disabled = false, icon }) {
   const {s,color}=useTheme();
+  const iconName = icon || (typeof children === "string" ? actionIcon(children) : null);
   return (
     <Pressable
       accessibilityRole="button"
@@ -26,8 +48,9 @@ export function Button({ children, onPress, quiet = false, disabled = false }) {
         { opacity: disabled ? 0.45 : pressed ? 0.75 : 1 },
       ]}
     >
-      <T kind="button" style={{ color: quiet ? color.ink : "#fff" }}>
-        {children}
+      {iconName && <Ionicons name={iconName} size={21} color={quiet ? color.ink : "#fff"} accessible={false} />}
+      <T kind="button" style={{ color: quiet ? color.ink : "#fff", flexShrink: 1, textAlign: "center" }}>
+        {typeof children === "string" ? children.replace(/^[＋+]\s*/, "") : children}
       </T>
     </Pressable>
   );
@@ -80,7 +103,7 @@ export function Row({ title, detail, amount, onPress }) {
         <T kind="note">{detail}</T>
       </View>
       {!!amount && <T kind="label">{amount}</T>}
-      <T accessibilityElementsHidden>›</T>
+      <Ionicons name="chevron-forward" size={18} color={color.muted} accessible={false} />
     </Pressable>
   );
 }
@@ -104,6 +127,8 @@ function styles(color){ return StyleSheet.create({
     color: color.ink,
   },
   btn: {
+    flexDirection: "row",
+    gap: 9,
     backgroundColor: color.green,
     paddingHorizontal: 15,
     paddingVertical: 13,

@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import SettingsScreen from "./SettingsScreen";
 import ReviewScreen from "./ReviewScreen";
 import ProjectInvoiceScreen from "./ProjectInvoiceScreen";
@@ -788,7 +789,7 @@ function Main() {
                   backgroundColor: name === t ? color.mint : color.white,
                 }}
               >
-                <T kind="strong">{["≡", "▤", "▥", "▧", "⚙"][i]}</T>
+                <Ionicons name={["wallet-outline", "briefcase-outline", "receipt-outline", "bar-chart-outline", "settings-outline"][i]} size={24} color={name === t ? color.ink : color.muted} accessible={false} />
                 <T kind="label">{t}</T>
               </Pressable>
             ))}
@@ -806,7 +807,7 @@ export default function App() {
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let mounted = true;
-    recoverWorkspace()
+    Promise.all([recoverWorkspace(), Ionicons.loadFont()])
       .then(() => {
         if (mounted) setReady(true);
       })
