@@ -29,7 +29,7 @@ function verify(state) {
   const expenses = new Map(state.expenses.map((x) => [x.id, x]));
   for (const x of expenses.values()) {
     if (
-      (x.workspace != null && !["Business","Personal"].includes(x.workspace)) ||
+      (x.workspace != null && !["Business", "Personal"].includes(x.workspace)) ||
       (x.workspace === "Personal" ? (x.project !== null || x.billable !== false) : !projects.has(x.project)) ||
       !validDate(x.date) ||
       !text(x.merchant) ||
@@ -74,18 +74,18 @@ function verify(state) {
     }
   }
   if (state.currency && !validCurrency(state.currency)) fail();
-  if(state.invoices!==undefined){
-    const {validInvoice,documentKey}=require('./invoices.cjs');
-    if(!Array.isArray(state.invoices)||state.invoices.length>50000||!state.invoices.every(validInvoice)||
-      new Set(state.invoices.map(x=>x.id)).size!==state.invoices.length||
-      new Set(state.invoices.map(documentKey)).size!==state.invoices.length) fail();
-    for(const doc of state.invoices){
-      for(const item of doc.items || []){
-        if(item.expenseId === undefined)continue;
+  if (state.invoices !== undefined) {
+    const { validInvoice, documentKey } = require('./invoices.cjs');
+    if (!Array.isArray(state.invoices) || state.invoices.length > 50000 || !state.invoices.every(validInvoice) ||
+      new Set(state.invoices.map(x => x.id)).size !== state.invoices.length ||
+      new Set(state.invoices.map(documentKey)).size !== state.invoices.length) fail();
+    for (const doc of state.invoices) {
+      for (const item of doc.items || []) {
+        if (item.expenseId === undefined) continue;
         const expense = expenses.get(item.expenseId);
-        if(doc.kind!=="Invoice" || !expense || !expense.billable || !projects.has(doc.projectId) ||
-           expense.project!==doc.projectId || doc.currency!==expense.currency || item.qty!==1 ||
-           expense.minor!==item.rate || item.label!==expense.merchant || claimed.has(expense.id))fail();
+        if (doc.kind !== "Invoice" || !expense || !expense.billable || !projects.has(doc.projectId) ||
+          expense.project !== doc.projectId || doc.currency !== expense.currency || item.qty !== 1 ||
+          expense.minor !== item.rate || item.label !== expense.merchant || claimed.has(expense.id)) fail();
         claimed.add(expense.id);
       }
     }

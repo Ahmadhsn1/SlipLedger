@@ -333,8 +333,8 @@ export function Account({ work, reload }) {
           Alert.alert(
             "Replace cloud backup?",
             "Upload this device’s ledger and original receipts to " +
-              user.email +
-              "?",
+            user.email +
+            "?",
             [
               { text: "Cancel", style: "cancel" },
               {

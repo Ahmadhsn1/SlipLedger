@@ -12,7 +12,7 @@ export default function WorkspaceSlider({ selected, onSelect }) {
   useEffect(() => {
     let active = true;
     const update = value => { if (active) setReduceMotion(value); };
-    AccessibilityInfo.isReduceMotionEnabled().then(update).catch(() => {});
+    AccessibilityInfo.isReduceMotionEnabled().then(update).catch(() => { });
     const listener = AccessibilityInfo.addEventListener("reduceMotionChanged", update);
     return () => { active = false; listener.remove(); };
   }, []);
@@ -41,8 +41,10 @@ export default function WorkspaceSlider({ selected, onSelect }) {
       {workspaces.map(name => (
         <Pressable key={name} accessibilityRole="button" accessibilityLabel={name + " workspace"}
           accessibilityState={{ selected: selected === name }} onPress={() => onSelect(name)} style={styles.button}>
-          <Text style={[styles.label, { color: dark ? (selected === name ? "#fafaff" : "#bdc2d1") :
-            (selected === name ? "#252d49" : "#535967") }]}>{name}</Text>
+          <Text style={[styles.label, {
+            color: dark ? (selected === name ? "#fafaff" : "#bdc2d1") :
+              (selected === name ? "#252d49" : "#535967")
+          }]}>{name}</Text>
         </Pressable>
       ))}
     </View>

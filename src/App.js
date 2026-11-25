@@ -85,7 +85,7 @@ function Main() {
     [error, setError] = useState(""),
     [busy, setBusy] = useState("");
   const theme = resolveTheme(db.appearance, useColorScheme());
-  const {color,s}=theme;
+  const { color, s } = theme;
   const lock = useRef(false),
     scroll = useRef(null);
   const page = stack[stack.length - 1],
@@ -150,9 +150,9 @@ function Main() {
   const invoiced = React.useMemo(() => {
     const map = new Map();
     for (const doc of db.invoices || []) for (const item of doc.items || [])
-      if (item.expenseId) map.set(item.expenseId,doc);
+      if (item.expenseId) map.set(item.expenseId, doc);
     return map;
-  },[db.invoices]);
+  }, [db.invoices]);
   const owner = (x) => claimIndex.get(x.id) || invoiced.get(x.id);
   const label = (x) =>
     x.workspace === "Personal" ? "Personal" : db.projects.find((p) => p.id === x.project)?.name || "Project";
@@ -168,7 +168,7 @@ function Main() {
   };
   const add = (id) => {
     const scope = id ? "Business" : workspace;
-    setDraft({...cleanDraft(id || "", db.currency || ""), workspace:scope, billable:scope==="Business"});
+    setDraft({ ...cleanDraft(id || "", db.currency || ""), workspace: scope, billable: scope === "Business" });
     setHint("");
     go("Add receipt");
   };
@@ -197,7 +197,7 @@ function Main() {
       asset = result.assets[0];
       ext =
         { "image/jpeg": "jpeg", "image/png": "png", "application/pdf": "pdf" }[
-          asset.mimeType
+        asset.mimeType
         ] || asset.name.split(".").pop().toLowerCase();
       uri = asset.uri;
     }
@@ -222,12 +222,12 @@ function Main() {
     if (!reader) throw Error("OCR module is missing. Install the latest APK.");
     const result = await reader.recognize(uri, ext === "pdf");
     if (typeof result !== "string" || !result.trim()) throw Error("No readable text found. Use a sharp, upright photo of printed English text with good lighting.");
-    return {...suggest(result, currencyOptions(db)), ocrText: result};
+    return { ...suggest(result, currencyOptions(db)), ocrText: result };
   }
   const retryScan = () => work("Reading receipt", async () => {
     try {
       const result = await scanReceipt(draft.uri || receiptDir + draft.file, draft.ext || draft.file?.split(".").pop());
-      setDraft(d=>({...d,...result}));
+      setDraft(d => ({ ...d, ...result }));
       setHint("Scan completed. Suggested fields were refreshed; review them before saving.");
     } catch (error) { setHint("Scan failed: " + error.message); }
   });
@@ -256,7 +256,7 @@ function Main() {
       commit((state) => {
         if (x.workspace !== "Personal" && !state.projects.some((p) => p.id === x.project))
           throw Error("Choose an existing project.");
-        if ((state.invoices||[]).some(d=>d.items?.some(i=>i.expenseId===x.id)) || state.reports.some((r) => r.items.some((i) => i.id === x.id)))
+        if ((state.invoices || []).some(d => d.items?.some(i => i.expenseId === x.id)) || state.reports.some((r) => r.items.some((i) => i.id === x.id)))
           throw Error("This receipt is already linked to a report or invoice.");
         return {
           ...state,
@@ -311,7 +311,7 @@ function Main() {
       setError("That client already has this project.");
       return;
     }
-    commit((state) => ({ ...state, projects: name === "Edit project" ? state.projects.map(x=>x.id===p.id?p:x) : [p, ...state.projects] }));
+    commit((state) => ({ ...state, projects: name === "Edit project" ? state.projects.map(x => x.id === p.id ? p : x) : [p, ...state.projects] }));
     if (stack.at(-2)?.name === "Review") field("project", p.id);
     back();
   }
@@ -320,7 +320,7 @@ function Main() {
       <Row
         key={x.id}
         title={x.merchant}
-        detail={[x.date,label(x),x.workspace === "Personal" ? null : status(x)].filter(Boolean).join(" · ")}
+        detail={[x.date, label(x), x.workspace === "Personal" ? null : status(x)].filter(Boolean).join(" · ")}
         amount={money(x.minor, x.currency)}
         onPress={() => go("Expense", x.id)}
       />
@@ -353,7 +353,7 @@ function Main() {
   const [workspace, setWorkspace] = useState("Personal");
   const [limit, setLimit] = useState(40);
   useEffect(() => setLimit(40), [search, filter, page]);
-  const workspaceExpenses=db.expenses.filter(x=>(x.workspace || "Business")===workspace);
+  const workspaceExpenses = db.expenses.filter(x => (x.workspace || "Business") === workspace);
   const filtered = workspaceExpenses.filter(
     (x) =>
       (filter === "All" || status(x) === filter) &&
@@ -363,12 +363,12 @@ function Main() {
         .includes(search.trim().toLowerCase()),
   );
   let content;
-  if (name === "Invoices") content=<InvoiceScreen initialId={page.id} db={db} commit={commit} work={work} />;
+  if (name === "Invoices") content = <InvoiceScreen initialId={page.id} db={db} commit={commit} work={work} />;
   if (name === "Ledger")
     content = (
       <LedgerScreen
         workspace={workspace}
-        setWorkspace={v=>{setWorkspace(v);setFilter("All");setSearch("");setLimit(40)}}
+        setWorkspace={v => { setWorkspace(v); setFilter("All"); setSearch(""); setLimit(40) }}
         workspaceExpenses={workspaceExpenses}
         outstanding={outstanding}
         db={db}
@@ -415,7 +415,7 @@ function Main() {
         <Button onPress={createProject}>Save project</Button>
       </>
     );
-  if(name==="Invoice project costs" && proj) content=<ProjectInvoiceScreen db={db} project={proj} work={work} commit={commit} finish={id=>setStack([{name:"Invoices",id}])}/>;
+  if (name === "Invoice project costs" && proj) content = <ProjectInvoiceScreen db={db} project={proj} work={work} commit={commit} finish={id => setStack([{ name: "Invoices", id }])} />;
   if (name === "Project" && proj) {
     const items = db.expenses.filter((x) => x.project === proj.id),
       ready = eligible(db, proj.id);
@@ -430,7 +430,7 @@ function Main() {
           </T>
         </View>
         <Button onPress={() => add(proj.id)}>Add receipt</Button>
-        <Button disabled={!ready.length} onPress={()=>go("Invoice project costs",proj.id)}>Invoice selected expenses</Button>
+        <Button disabled={!ready.length} onPress={() => go("Invoice project costs", proj.id)}>Invoice selected expenses</Button>
         <Button
           quiet
           disabled={!ready.length}
@@ -438,8 +438,8 @@ function Main() {
         >
           Prepare client report
         </Button>
-        <Button quiet onPress={()=>{setClient(proj.client);setProject(proj.name);go("Edit project",proj.id);}}>Edit project</Button>
-        <Button quiet onPress={()=>confirm("Delete project?","Only an empty project can be deleted. Remove its expenses, reports and invoices first.","Delete",()=>work("Deleting project",()=>{commit(st=>{if(st.expenses.some(x=>x.project===proj.id)||st.reports.some(x=>x.projectId===proj.id)||(st.invoices||[]).some(x=>x.projectId===proj.id))throw Error("This project has linked records. Remove them first.");return {...st,projects:st.projects.filter(x=>x.id!==proj.id)};});back();}))}>Delete project</Button>
+        <Button quiet onPress={() => { setClient(proj.client); setProject(proj.name); go("Edit project", proj.id); }}>Edit project</Button>
+        <Button quiet onPress={() => confirm("Delete project?", "Only an empty project can be deleted. Remove its expenses, reports and invoices first.", "Delete", () => work("Deleting project", () => { commit(st => { if (st.expenses.some(x => x.project === proj.id) || st.reports.some(x => x.projectId === proj.id) || (st.invoices || []).some(x => x.projectId === proj.id)) throw Error("This project has linked records. Remove them first."); return { ...st, projects: st.projects.filter(x => x.id !== proj.id) }; }); back(); }))}>Delete project</Button>
         <T kind="strong">Project receipts</T>
         {rows(items)}
       </>
@@ -489,7 +489,7 @@ function Main() {
           {x.date} · {x.category}
         </T>
         <T>
-          {x.workspace === "Personal" ? label(x) : label(x)+" · "+status(x)}
+          {x.workspace === "Personal" ? label(x) : label(x) + " · " + status(x)}
         </T>
         <T kind="note">
           Included tax:{" "}
@@ -646,7 +646,7 @@ function Main() {
             Share {f.toUpperCase()}
           </Button>
         ))}
-        {rep.status !== "Prepared" && <Button quiet onPress={()=>confirm("Correct report status?","Return this report to Prepared. This also reverses its recorded sent or reimbursement status.","Reset status",()=>commit(st=>({...st,reports:st.reports.map(r=>r.id===rep.id?{...r,status:"Prepared"}:r)})))}>Reset to prepared</Button>}
+        {rep.status !== "Prepared" && <Button quiet onPress={() => confirm("Correct report status?", "Return this report to Prepared. This also reverses its recorded sent or reimbursement status.", "Reset status", () => commit(st => ({ ...st, reports: st.reports.map(r => r.id === rep.id ? { ...r, status: "Prepared" } : r) })))}>Reset to prepared</Button>}
         {next && (
           <Button
             quiet
@@ -715,7 +715,7 @@ function Main() {
     content = <Account work={work} reload={() => setDb(read())} />;
   return (
     <ThemeContext.Provider value={theme}><SafeAreaView style={{ flex: 1, backgroundColor: color.paper }}>
-      <StatusBar barStyle={theme===themes.dark?"light-content":"dark-content"} backgroundColor={color.paper} />
+      <StatusBar barStyle={theme === themes.dark ? "light-content" : "dark-content"} backgroundColor={color.paper} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
@@ -809,8 +809,8 @@ function Main() {
   );
 }
 export default function App() {
-  const systemTheme=resolveTheme("System",useColorScheme());
-  const {color}=systemTheme;
+  const systemTheme = resolveTheme("System", useColorScheme());
+  const { color } = systemTheme;
   const [ready, setReady] = useState(false);
   const [issue, setIssue] = useState("");
   const [attempt, setAttempt] = useState(0);

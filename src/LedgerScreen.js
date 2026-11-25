@@ -18,19 +18,19 @@ export default function LedgerScreen({
   setLimit,
   summary,
 }) {
-  const {s,color}=useTheme();
+  const { s, color } = useTheme();
   return (
     <>
-      <WorkspaceSlider selected={workspace} onSelect={setWorkspace}/>
+      <WorkspaceSlider selected={workspace} onSelect={setWorkspace} />
       <View style={s.hero}>
         <T kind="label" style={{ color: "#eff1ff" }}>
-          {workspace==="Personal" ? "Personal spending" : "Outstanding reimbursement"}
+          {workspace === "Personal" ? "Personal spending" : "Outstanding reimbursement"}
         </T>
         <T kind="title" style={{ color: "#fff" }}>
-          {workspace==="Personal" ? summary(workspaceExpenses) || "No expenses yet" : summary(outstanding) || "No open balance"}
+          {workspace === "Personal" ? summary(workspaceExpenses) || "No expenses yet" : summary(outstanding) || "No open balance"}
         </T>
         <T style={{ color: "#eff1ff" }}>
-          {workspace==="Personal" ? "All recorded personal expenses" : outstanding.length+" billable receipts awaiting reimbursement"}
+          {workspace === "Personal" ? "All recorded personal expenses" : outstanding.length + " billable receipts awaiting reimbursement"}
         </T>
       </View>
       <Button onPress={() => add()}>＋ Add receipt</Button>
@@ -43,7 +43,7 @@ export default function LedgerScreen({
             value={search}
             onChangeText={setSearch}
           />
-          {workspace==="Business" && <Chips
+          {workspace === "Business" && <Chips
             values={[
               "All",
               "Ready to claim",

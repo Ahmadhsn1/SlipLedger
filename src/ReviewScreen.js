@@ -14,12 +14,12 @@ export default function ReviewScreen({
   checkSave,
   retryScan,
 }) {
-  const [showText,setShowText] = useState(false);
+  const [showText, setShowText] = useState(false);
   return (
     <>
       {!!hint && <T kind="note">{hint}</T>}
       {(draft.uri || draft.file) && <Button quiet icon="scan-outline" onPress={retryScan}>Scan again · replaces suggested fields</Button>}
-      {!!draft.ocrText && <><Button quiet onPress={()=>setShowText(v=>!v)}>{showText?"Hide extracted text":"Show extracted text"}</Button>{showText && <T selectable>{draft.ocrText}</T>}</>}
+      {!!draft.ocrText && <><Button quiet onPress={() => setShowText(v => !v)}>{showText ? "Hide extracted text" : "Show extracted text"}</Button>{showText && <T selectable>{draft.ocrText}</T>}</>}
       {(draft.uri || draft.file) &&
         !((draft.ext || draft.file?.split(".").pop()) === "pdf") && (
           <Image
@@ -74,20 +74,20 @@ export default function ReviewScreen({
         onChangeText={(v) => field("tax", v)}
       />
       <T kind="label">Workspace</T>
-      <Chips values={["Personal","Business"]} selected={draft.workspace || "Business"} onSelect={v=>field("workspace",v)}/>
-      {draft.workspace!=="Personal" && <><T kind="label">Project</T>
-      {db.projects.map((p) => (
-        <Button
-          key={p.id}
-          quiet={draft.project !== p.id}
-          onPress={() => field("project", p.id)}
-        >
-          {p.name} · {p.client}
+      <Chips values={["Personal", "Business"]} selected={draft.workspace || "Business"} onSelect={v => field("workspace", v)} />
+      {draft.workspace !== "Personal" && <><T kind="label">Project</T>
+        {db.projects.map((p) => (
+          <Button
+            key={p.id}
+            quiet={draft.project !== p.id}
+            onPress={() => field("project", p.id)}
+          >
+            {p.name} · {p.client}
+          </Button>
+        ))}
+        <Button quiet onPress={newProject}>
+          ＋ New project
         </Button>
-      ))}
-      <Button quiet onPress={newProject}>
-        ＋ New project
-      </Button>
       </>}
       <T kind="label">Category</T>
       <Chips
@@ -95,12 +95,12 @@ export default function ReviewScreen({
         selected={draft.category}
         onSelect={(v) => field("category", v)}
       />
-      {draft.workspace!=="Personal" && <><T kind="label">Who covers this expense?</T>
-      <Chips
-        values={["Client", "My business"]}
-        selected={draft.billable ? "Client" : "My business"}
-        onSelect={(v) => field("billable", v === "Client")}
-      />
+      {draft.workspace !== "Personal" && <><T kind="label">Who covers this expense?</T>
+        <Chips
+          values={["Client", "My business"]}
+          selected={draft.billable ? "Client" : "My business"}
+          onSelect={(v) => field("billable", v === "Client")}
+        />
       </>}
       <Button onPress={checkSave}>Confirm and save</Button>
     </>

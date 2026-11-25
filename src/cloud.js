@@ -12,14 +12,14 @@ const url = process.env.EXPO_PUBLIC_SUPABASE_URL,
 export const cloud =
   url && key
     ? createClient(url, key, {
-        auth: {
-          storage: sessionStorage,
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: false,
-          flowType: "pkce",
-        },
-      })
+      auth: {
+        storage: sessionStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false,
+        flowType: "pkce",
+      },
+    })
     : null;
 const authRedirect = "slipledger://auth/callback";
 const LIMIT = 24 * 1024 * 1024;
@@ -101,7 +101,7 @@ export async function backup(userId) {
       }),
   );
 }
-const hasRecords = state => ["projects","expenses","reports","invoices"].some(key => state[key]?.length);
+const hasRecords = state => ["projects", "expenses", "reports", "invoices"].some(key => state[key]?.length);
 export async function restore(userId) {
   if (hasRecords(read()))
     throw Error("Restore requires an empty local workspace.");
