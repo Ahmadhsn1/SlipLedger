@@ -1,6 +1,7 @@
 # Release evidence
 
 ## Checks executed
+
 - Android release compilation completed successfully (579 Gradle tasks). The installable internal preview is signed and verified with APK signature schemes v2 and v3. It targets API 36, requires API 24 or later and contains the ARM64 ABI. Its package ID is studio.fieldtab.mobile.preview.
 - Clean dependency installation applied the pinned Metro compatibility patch. The JS dependency audit reported zero known vulnerabilities on the final resolved tree. This is one dependency check, not a security certification.
 - 40 automated ledger, parser, currency, invoice CRUD and backup-validation tests passed in the current suite. Cases include integer amounts, calendar dates, ambiguous currency/date, grouped European totals, internal exclusions, duplicate claims, formula-safe CSV and unsafe backup references.
@@ -11,11 +12,12 @@
 - The production configuration guard rejects a release missing provider keys or privacy/terms URLs. This prevents publishing an evaluation edition as a configured commercial app.
 
 ## Evidence outstanding
-| Release area | Required evidence |
-|---|---|
+
+| Release area       | Required evidence                                                                                                                                                                              |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Device reliability | Physical-device tests covering camera, file import, rotation, offline restart, memory pressure, native picker cancellation, OCR, PDF rendering/sharing, accessibility, and backup restoration. |
-| Accuracy | 200 labelled documents with correction-time measurements. Parser unit tests alone cannot measure on-device text recognition. |
-| Accounts | Owner-controlled deployment, production transactional email, OTP login, secure session lifecycle, actual two-account backup/restore and complete account deletion. |
-| Money | Store products, localized pricing, approved seller accounts, sandbox purchase/renewal/cancellation/refund/restore tests and eventual settlement reconciliation. |
-| Publication | Owner signing identities, supported releases, approved product name and disclosures, published terms/privacy, support contact and submission review. |
-| Market | Qualified interviews, timed comparison against existing tools, repeat use and paid commitments. |
+| Accuracy           | 200 labelled documents with correction-time measurements. Parser unit tests alone cannot measure on-device text recognition.                                                                   |
+| Accounts           | Owner-controlled deployment, production transactional email, OTP login, secure session lifecycle, actual two-account backup/restore and complete account deletion.                             |
+| Money              | Store products, localized pricing, approved seller accounts, sandbox purchase/renewal/cancellation/refund/restore tests and eventual settlement reconciliation.                                |
+| Publication        | Owner signing identities, supported releases, approved product name and disclosures, published terms/privacy, support contact and submission review.                                           |
+| Market             | Qualified interviews, timed comparison against existing tools, repeat use and paid commitments.                                                                                                |
