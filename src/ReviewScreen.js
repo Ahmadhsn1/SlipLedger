@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Image } from "react-native";
 import { T, Button, Chips, Field } from "./UI";
 import * as Sharing from "expo-sharing";
@@ -12,10 +12,14 @@ export default function ReviewScreen({
   work,
   db,
   checkSave,
+  retryScan,
 }) {
+  const [showText,setShowText] = useState(false);
   return (
     <>
       {!!hint && <T kind="note">{hint}</T>}
+      {(draft.uri || draft.file) && <Button quiet icon="scan-outline" onPress={retryScan}>Scan again · replaces suggested fields</Button>}
+      {!!draft.ocrText && <><Button quiet onPress={()=>setShowText(v=>!v)}>{showText?"Hide extracted text":"Show extracted text"}</Button>{showText && <T selectable>{draft.ocrText}</T>}</>}
       {(draft.uri || draft.file) &&
         !((draft.ext || draft.file?.split(".").pop()) === "pdf") && (
           <Image

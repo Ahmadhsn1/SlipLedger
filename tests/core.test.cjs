@@ -153,3 +153,8 @@ test("OCR missing values do not borrow a different labelled amount", () => {
   assert.equal(suggest("Shop\nVAT\nTotal GBP 12.00").tax, "");
   assert.equal(suggest("Shop\nTOTAL\nCard payment 12.00").amount, "");
 });
+test('whole rupee totals are extracted without requiring printed decimals', () => {
+  assert.equal(suggest('Example Store\nTOTAL PKR 1,250').amount, '1250.00');
+  assert.equal(suggest('Example Store\nTOTAL\nPKR 1250').amount, '1250.00');
+  assert.equal(suggest('Example Store\nTOTAL PKR -1250').amount, '');
+});

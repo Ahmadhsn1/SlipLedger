@@ -204,25 +204,33 @@ function Main() {
     if (uri && !["jpeg", "jpg", "png", "pdf", "heic"].includes(ext))
       throw Error("Choose a JPEG, PNG or PDF.");
     if (uri) await checkInput(uri);
-    let fields = {},
-      note = "";
+    let fields = {}, note = "";
     if (uri) {
       try {
-        const result = await requireOptionalNativeModule(
-          "FieldReader",
-        ).recognize(uri, ext === "pdf");
-        fields = suggest(result, currencyOptions(db));
-        note =
-          "Review the extracted details against the receipt. Category, workspace, project and reimbursement still need your confirmation.";
-      } catch {
-        note =
-          "Enter the details manually. The original will be attached when you save.";
+        fields = await scanReceipt(uri, ext);
+        note = "Text detected. Review the suggested fields against the original before saving.";
+      } catch (error) {
+        note = "Scan failed: " + (error.message || "Unknown OCR error") + " You can retry or enter the details manually.";
       }
     }
     setDraft((d) => ({ ...d, ...fields, uri, ext }));
     setHint(note);
     setStack((v) => [...v.slice(0, -1), { name: "Review" }]);
   }
+  async function scanReceipt(uri, ext) {
+    const reader = requireOptionalNativeModule("FieldReader");
+    if (!reader) throw Error("OCR module is missing. Install the latest APK.");
+    const result = await reader.recognize(uri, ext === "pdf");
+    if (typeof result !== "string" || !result.trim()) throw Error("No readable text found. Use a sharp, upright photo of printed English text with good lighting.");
+    return {...suggest(result, currencyOptions(db)), ocrText: result};
+  }
+  const retryScan = () => work("Reading receipt", async () => {
+    try {
+      const result = await scanReceipt(draft.uri || receiptDir + draft.file, draft.ext || draft.file?.split(".").pop());
+      setDraft(d=>({...d,...result}));
+      setHint("Scan completed. Suggested fields were refreshed; review them before saving.");
+    } catch (error) { setHint("Scan failed: " + error.message); }
+  });
   async function save() {
     const msg = validate(draft);
     if (msg) {
@@ -467,6 +475,7 @@ function Main() {
         newProject={newProject}
         work={work}
         db={db}
+        retryScan={retryScan}
         checkSave={checkSave}
       />
     );

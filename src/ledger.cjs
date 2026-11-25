@@ -33,7 +33,12 @@ function printedAmount(line) {
   const match = line.match(
     /(?:^|[^\d.,])((?:\d{1,3}(?:[., ]\d{3})+|\d{1,8})[.,]\d{2})\s*(?:[A-Z]{3})?\s*$/i,
   );
-  if (!match) return null;
+  if (!match) {
+    const whole = line.match(/(?:^|[^\d.,])((?:\d{1,3}(?:[, ]\d{3})+|\d{1,8}))\s*(?:[A-Z]{3})?\s*$/i);
+    if (!whole) return null;
+    const amount = whole[1].replace(/[, ]/g, "") + ".00";
+    return cents(amount) === null ? null : amount;
+  }
   const raw = match[1],
     major = raw.slice(0, -3).replace(/[., ]/g, "");
   const amount = major + "." + raw.slice(-2);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
 export { Ionicons as Icon };
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
@@ -33,8 +33,10 @@ function actionIcon(label) {
   if (/reset|try again/.test(text)) return "refresh-outline";
   return null;
 }
-export function Button({ children, onPress, quiet = false, disabled = false, icon }) {
+export function Button({ children, onPress, quiet = false, disabled = false, icon, variant }) {
   const {s,color}=useTheme();
+  const appearance = variant || (quiet ? "outline" : "default");
+  const muted = appearance !== "default" && appearance !== "destructive";
   const iconName = icon || (typeof children === "string" ? actionIcon(children) : null);
   return (
     <Pressable
@@ -44,18 +46,22 @@ export function Button({ children, onPress, quiet = false, disabled = false, ico
       onPress={onPress}
       style={({ pressed }) => [
         s.btn,
-        quiet && s.quiet,
+        appearance === "outline" && s.quiet,
+        appearance === "secondary" && {backgroundColor:color.mint},
+        appearance === "ghost" && {backgroundColor:"transparent"},
+        appearance === "destructive" && {backgroundColor:color.error},
         { opacity: disabled ? 0.45 : pressed ? 0.75 : 1 },
       ]}
     >
-      {iconName && <Ionicons name={iconName} size={21} color={quiet ? color.ink : "#fff"} accessible={false} />}
-      <T kind="button" style={{ color: quiet ? color.ink : "#fff", flexShrink: 1, textAlign: "center" }}>
+      {iconName && <Ionicons name={iconName} size={21} color={muted ? color.ink : "#fff"} accessible={false} />}
+      <T kind="button" style={{ color: muted ? color.ink : "#fff", flexShrink: 1, textAlign: "center" }}>
         {typeof children === "string" ? children.replace(/^[＋+]\s*/, "") : children}
       </T>
     </Pressable>
   );
 }
 export function Field({ label, ...props }) {
+  const [focused,setFocused]=useState(false);
   const {s,color}=useTheme();
   return (
     <View style={{ gap: 5 }}>
@@ -65,7 +71,9 @@ export function Field({ label, ...props }) {
         maxLength={120}
         placeholderTextColor={color.muted}
         {...props}
-        style={s.input}
+        onFocus={e=>{setFocused(true);props.onFocus?.(e);}}
+        onBlur={e=>{setFocused(false);props.onBlur?.(e);}}
+        style={[s.input,focused && {borderColor:color.green,borderWidth:2}]}
       />
     </View>
   );
@@ -93,6 +101,10 @@ export function Chips({ values, selected, onSelect }) {
       ))}
     </View>
   );
+}
+export function Card({children,style}) {
+  const {s}=useTheme();
+  return <View style={[s.panel,style]}>{children}</View>;
 }
 export function Row({ title, detail, amount, onPress }) {
   const {s,color}=useTheme();
